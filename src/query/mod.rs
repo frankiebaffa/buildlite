@@ -78,7 +78,7 @@ impl<'query, T> Query<'query, T> where T: PrimaryKeyModel {
         ));
         return self;
     }
-    pub fn join_pk<U: ForeignKey<T>>(mut self) -> Self {
+    pub fn join<U: ForeignKey<T>>(mut self) -> Self {
         match self.query_type {
             QueryType::Select => {},
             QueryType::Update => panic!("Update-From is not yet supported"),
@@ -458,34 +458,5 @@ impl<'query, T> Query<'query, T> where T: PrimaryKeyModel {
             let val = res.into_iter().nth(0).unwrap();
             return Ok(val);
         }
-    }
-}
-pub trait JoinFK<T, U> where T: PrimaryKeyModel, U: ForeignKey<T> {
-    fn join_fk(self) -> Self;
-}
-impl<'joinfk, T, U> JoinFK<T, U> for Query<'joinfk, U>
-where
-    T: PrimaryKeyModel,
-    U: ForeignKey<T>,
-{
-    fn join_fk(mut self) -> Self {
-        let join_str;
-        let dlim;
-        if self.join.is_none() {
-            join_str = String::new();
-            dlim = String::new();
-        } else {
-            join_str = self.join.unwrap();
-            dlim = String::from(" ");
-        }
-        self.join = Some(
-            format!(
-                "{}{}join {}.{} as {} on {}.{} = {}.{}",
-                join_str, dlim,
-                T::DB, T::TABLE, T::ALIAS,
-                U::ALIAS, U::FOREIGN_KEY, T::ALIAS, T::PRIMARY_KEY
-            )
-        );
-        return self;
     }
 }
