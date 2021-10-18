@@ -48,7 +48,7 @@ impl<'query, T> Query<'query, T> where T: PrimaryKeyModel {
             select: format!("select {}.*", T::ALIAS),
             update: format!("update {}.{}", T::DB, T::TABLE),
             set: None,
-            from: format!("from {}.{} as {}", T::DB, T::TABLE, T::ALIAS),
+            from: String::new(),
             join: None,
             clause: None,
             _value: None,
@@ -76,6 +76,10 @@ impl<'query, T> Query<'query, T> where T: PrimaryKeyModel {
         return self;
     }
     pub fn join_pk<U: ForeignKey<T>>(mut self) -> Self {
+        match self.query_type {
+            QueryType::Select => {},
+            QueryType::Update => panic!("Update-From is not yet supported"),
+        }
         let join_str;
         let dlim;
         if self.join.is_none() {
@@ -96,6 +100,10 @@ impl<'query, T> Query<'query, T> where T: PrimaryKeyModel {
         return self;
     }
     pub fn join_and(mut self) -> Self {
+        match self.query_type {
+            QueryType::Select => {},
+            QueryType::Update => panic!("Update-From is not yet supported"),
+        }
         let join_str;
         let dlim;
         if self.join.is_none() {
@@ -118,6 +126,10 @@ impl<'query, T> Query<'query, T> where T: PrimaryKeyModel {
         column: &'a str,
         value: &'query dyn ToSql
     ) -> Self where U: ForeignKey<T> {
+        match self.query_type {
+            QueryType::Select => {},
+            QueryType::Update => panic!("Update-From is not yet supported"),
+        }
         let join_str;
         let dlim;
         if self.join.is_none() {
@@ -277,17 +289,19 @@ impl<'query, T> Query<'query, T> where T: PrimaryKeyModel {
     pub fn query_to_string(&self) -> String {
         let mut sql;
         match self.query_type {
-            QueryType::Select => sql = format!("{} {}", self.select, self.from),
+            QueryType::Select => {
+                sql = format!("{} {}", self.select, self.from);
+                if self.join.is_some() {
+                    let join = self.join.clone().unwrap();
+                    sql.push_str(&format!(" {}", join));
+                }
+            },
             QueryType::Update => {
                 if self.set.is_none() {
                     panic!("Cannot create an update statement without any set values");
                 }
-                sql = format!("{} {} {}", self.update, self.set.clone().unwrap(), self.from);
+                sql = format!("{} {}", self.update, self.set.clone().unwrap());
             },
-        }
-        if self.join.is_some() {
-            let join = self.join.clone().unwrap();
-            sql.push_str(&format!(" {}", join));
         }
         if self.clause.is_some() {
             let clause = self.clause.clone().unwrap();
