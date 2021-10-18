@@ -211,14 +211,28 @@ impl<'query, T> Query<'query, T> where T: PrimaryKeyModel {
         let param_num = self.select_params.len() + self.update_params.len();
         let param_name = format!(":param{}", param_num);
         self.select_params.insert(param_name.clone(), Box::new(value));
-        self.clause = Some(
-            format!(
-                "{}{}{}.{} {} {}",
-                clause_str, dlim,
-                T::ALIAS, column,
-                op, param_name,
-            )
-        );
+        match self.query_type {
+            QueryType::Select => {
+                self.clause = Some(
+                    format!(
+                        "{}{}{}.{} {} {}",
+                        clause_str, dlim,
+                        T::ALIAS, column,
+                        op, param_name,
+                    )
+                );
+            },
+            QueryType::Update => {
+                self.clause = Some(
+                    format!(
+                        "{}{}{} {} {}",
+                        clause_str, dlim,
+                        column,
+                        op, param_name,
+                    )
+                );
+            },
+        }
         return self;
     }
     pub fn where_eq<'a>(
