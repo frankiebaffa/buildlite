@@ -1,0 +1,10 @@
+[package]
+name = "buildlite"
+version = "0.1.0"
+edition = "2018"
+
+[dependencies]
+chrono = { version = "0.4", features = ["serde"] }
+rusqlite  = { version = "0.25", features = ["bundled"] }
+worm = { git = "https://github.com/frankiebaffa/worm", branch = "master" }
+worm_derive = { git = "https://github.com/frankiebaffa/worm_derive", branch = "master" }
