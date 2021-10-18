@@ -295,26 +295,58 @@ impl<'query, T> Query<'query, T> where T: PrimaryKeyModel {
         }
         return sql;
     }
-    fn flip_type(mut self) -> Self {
-        match self.query_type {
-            QueryType::Select => self.query_type = QueryType::Update,
-            QueryType::Update => self.query_type = QueryType::Select,
-        }
-        return self;
-    }
-    pub fn execute(self, db: &mut impl DbCtx) -> Result<Vec<T>, BuildliteError>{
+    pub fn execute_update(self, db: &mut impl DbCtx) -> Result<usize, BuildliteError> {
         let mut sql = self.query_to_string();
         // get query order of parameters
-        let false_map = HashMap::new(); // always empty map to convert select keys
         let keys;
         let select_keys = self.select_params.keys();
         match self.query_type {
             QueryType::Select => {
-                keys = select_keys.chain(false_map.keys());
+                panic!("Cannot execute an update from a select query");
             }
             QueryType::Update => {
                 let update_keys = self.update_params.keys();
                 keys = select_keys.chain(update_keys);
+            },
+        }
+        let mut key_indices: Vec<(usize, String)> = Vec::new();
+        for key in keys {
+            let index = sql.find(key).unwrap();
+            sql = sql.replace(key, "?");
+            key_indices.push((index, key.clone()));
+        }
+        key_indices.sort_unstable_by(|a, b| a.0.cmp(&b.0));
+        let mut value_order = Vec::new();
+        for key_index in key_indices {
+            let key = key_index.1;
+            let value = match self.select_params.get(&key) {
+                Some(value) => value,
+                None => self.update_params.get(&key).unwrap(),
+            };
+            value_order.push(value);
+        }
+        let param = rusqlite::params_from_iter(value_order);
+        let c = db.use_connection();
+        match self.query_type {
+            QueryType::Select => {
+                panic!("Cannot execute an update on a select query");
+            },
+            QueryType::Update => {
+                return Ok(c.execute(&sql, param).quick_match()?);
+            },
+        }
+    }
+    pub fn execute(self, db: &mut impl DbCtx) -> Result<Vec<T>, BuildliteError> {
+        let mut sql = self.query_to_string();
+        // get query order of parameters
+        let keys;
+        let select_keys = self.select_params.keys();
+        match self.query_type {
+            QueryType::Select => {
+                keys = select_keys;
+            }
+            QueryType::Update => {
+                panic!("Cannot execute a select on an update query");
             },
         }
         let mut key_indices: Vec<(usize, String)> = Vec::new();
@@ -345,9 +377,7 @@ impl<'query, T> Query<'query, T> where T: PrimaryKeyModel {
                 }
             },
             QueryType::Update => {
-                c.execute(&sql, param).quick_match()?;
-                objs = self.flip_type()
-                    .execute(db)?;
+                panic!("Cannot execute a select on an update query");
             },
         }
         return Ok(objs);
