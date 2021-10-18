@@ -23,6 +23,7 @@ pub struct Query<'query, T> {
     from: String,
     join: Option<String>,
     clause: Option<String>,
+    orderby: Option<String>,
     _value: Option<T>,
     select_params: HashMap<String, Box<&'query dyn ToSql>>,
     update_params: HashMap<String, Box<&'query dyn ToSql>>,
@@ -37,6 +38,7 @@ impl<'query, T> Query<'query, T> where T: PrimaryKeyModel {
             from: format!("from {}.{} as {}", T::DB, T::TABLE, T::ALIAS),
             join: None,
             clause: None,
+            orderby: None,
             _value: None,
             select_params: HashMap::new(),
             update_params: HashMap::new(),
@@ -51,6 +53,7 @@ impl<'query, T> Query<'query, T> where T: PrimaryKeyModel {
             from: String::new(),
             join: None,
             clause: None,
+            orderby: None,
             _value: None,
             select_params: HashMap::new(),
             update_params: HashMap::new(),
@@ -299,6 +302,43 @@ impl<'query, T> Query<'query, T> where T: PrimaryKeyModel {
     }
     pub fn or(self) -> Self {
         return self.concat("or");
+    }
+    fn orderby<'a>(
+        mut self,
+        dir: &'a str,
+        column: &'a str,
+    ) -> Self {
+        let orderby_str;
+        let dlim;
+        if self.orderby.is_none() {
+            orderby_str = String::new();
+            dlim = String::from("order by ");
+        } else {
+            orderby_str = self.orderby.unwrap();
+            dlim = String::from(", ");
+        }
+        match self.query_type {
+            QueryType::Select => {
+                self.orderby = Some(
+                    format!(
+                        "{}{}{}.{} {}",
+                        orderby_str, dlim,
+                        T::ALIAS, column,
+                        dir,
+                    )
+                );
+            },
+            QueryType::Update => {
+                panic!("Update-From not yet supported");
+            },
+        }
+        return self;
+    }
+    pub fn orderby_asc<'a>(self, column: &'a str) -> Self {
+        return self.orderby("asc", column);
+    }
+    pub fn orderby_desc<'a>(self, column: &'a str) -> Self {
+        return self.orderby("desc", column);
     }
     pub fn query_to_string(&self) -> String {
         let mut sql;
