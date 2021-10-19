@@ -78,7 +78,139 @@ impl<'query, T> Query<'query, T> where T: PrimaryKeyModel {
         ));
         return self;
     }
-    pub fn join<U: ForeignKey<T>>(mut self) -> Self {
+    pub fn join_fk<U>(mut self) -> Self
+    where
+        U: PrimaryKeyModel,
+        T: ForeignKey<U>,
+    {
+        match self.query_type {
+            QueryType::Select => {},
+            QueryType::Update => panic!("Update-From is not yet supported"),
+        }
+        let join_str;
+        let dlim;
+        if self.join.is_none() {
+            join_str = String::new();
+            dlim = String::new();
+        } else {
+            join_str = self.join.unwrap();
+            dlim = String::from(" ");
+        }
+        self.join = Some(
+            format!(
+                "{}{}join {}.{} as {} on {}.{} = {}.{}",
+                join_str, dlim,
+                U::DB, U::TABLE, U::ALIAS,
+                T::ALIAS, T::FOREIGN_KEY, U::ALIAS, U::PRIMARY_KEY,
+            )
+        );
+        return self;
+    }
+    fn filter_join_fk<'a, U>(
+        mut self,
+        op: &'a str,
+        column: &'a str,
+        value: &'query dyn ToSql
+    ) -> Self
+    where
+        U: PrimaryKeyModel,
+        T: ForeignKey<U>,
+    {
+        match self.query_type {
+            QueryType::Select => {},
+            QueryType::Update => panic!("Update-From is not yet supported"),
+        }
+        let join_str;
+        let dlim;
+        if self.join.is_none() {
+            panic!("Cannot add another join constraint when there is no join");
+        } else {
+            join_str = self.join.unwrap();
+            dlim = String::from(" ");
+        }
+        let param_num = self.select_params.len() + self.update_params.len();
+        let param_name = format!(":param{}", param_num);
+        self.select_params.insert(param_name.clone(), Box::new(value));
+        self.join = Some(
+            format!(
+                "{}{}{}.{} {} {}",
+                join_str, dlim,
+                U::ALIAS, column,
+                op, param_name,
+            )
+        );
+        return self;
+    }
+    pub fn join_fk_eq<'a, U>(
+        self,
+        column: &'a str,
+        value: &'query dyn ToSql
+    ) -> Self
+    where
+        U: PrimaryKeyModel,
+        T: ForeignKey<U>
+    {
+        return self.filter_join_fk::<U>("=", column, value);
+    }
+    pub fn join_fk_ne<'a, U>(
+        self,
+        column: &'a str,
+        value: &'query dyn ToSql
+    ) -> Self
+    where
+        U: PrimaryKeyModel,
+        T: ForeignKey<U>
+    {
+        return self.filter_join_fk::<U>("!=", column, value);
+    }
+    pub fn join_fk_gt<'a, U>(
+        self,
+        column: &'a str,
+        value: &'query dyn ToSql
+    ) -> Self
+    where
+        U: PrimaryKeyModel,
+        T: ForeignKey<U>
+    {
+        return self.filter_join_fk::<U>(">", column, value);
+    }
+    pub fn join_fk_lt<'a, U>(
+        self,
+        column: &'a str,
+        value: &'query dyn ToSql
+    ) -> Self
+    where
+        U: PrimaryKeyModel,
+        T: ForeignKey<U>
+    {
+        return self.filter_join_fk::<U>("<", column, value);
+    }
+    pub fn join_fk_ge<'a, U>(
+        self,
+        column: &'a str,
+        value: &'query dyn ToSql
+    ) -> Self
+    where
+        U: PrimaryKeyModel,
+        T: ForeignKey<U>
+    {
+        return self.filter_join_fk::<U>(">=", column, value);
+    }
+    pub fn join_fk_le<'a, U>(
+        self,
+        column: &'a str,
+        value: &'query dyn ToSql
+    ) -> Self
+    where
+        U: PrimaryKeyModel,
+        T: ForeignKey<U>
+    {
+        return self.filter_join_fk::<U>("<=", column, value);
+    }
+    pub fn join<U>(mut self) -> Self
+    where
+        U: ForeignKey<T>
+    {
         match self.query_type {
             QueryType::Select => {},
             QueryType::Update => panic!("Update-From is not yet supported"),
@@ -128,7 +260,10 @@ impl<'query, T> Query<'query, T> where T: PrimaryKeyModel {
         op: &'a str,
         column: &'a str,
         value: &'query dyn ToSql
-    ) -> Self where U: ForeignKey<T> {
+    ) -> Self
+    where
+        U: ForeignKey<T>
+    {
         match self.query_type {
             QueryType::Select => {},
             QueryType::Update => panic!("Update-From is not yet supported"),
@@ -158,50 +293,71 @@ impl<'query, T> Query<'query, T> where T: PrimaryKeyModel {
         self,
         column: &'a str,
         value: &'query dyn ToSql
-    ) -> Self where U: ForeignKey<T> {
+    ) -> Self
+    where
+        U: ForeignKey<T>
+    {
         return self.filter_join::<U>("=", column, value);
     }
     pub fn join_ne<'a, U>(
         self,
         column: &'a str,
         value: &'query dyn ToSql
-    ) -> Self where U: ForeignKey<T> {
+    ) -> Self
+    where
+        U: ForeignKey<T>
+    {
         return self.filter_join::<U>("!=", column, value);
     }
     pub fn join_gt<'a, U>(
         self,
         column: &'a str,
         value: &'query dyn ToSql
-    ) -> Self where U: ForeignKey<T> {
+    ) -> Self
+    where
+        U: ForeignKey<T>
+    {
         return self.filter_join::<U>(">", column, value);
     }
     pub fn join_lt<'a, U>(
         self,
         column: &'a str,
         value: &'query dyn ToSql
-    ) -> Self where U: ForeignKey<T> {
+    ) -> Self
+    where
+        U: ForeignKey<T>
+    {
         return self.filter_join::<U>("<", column, value);
     }
     pub fn join_ge<'a, U>(
         self,
         column: &'a str,
         value: &'query dyn ToSql
-    ) -> Self where U: ForeignKey<T> {
+    ) -> Self
+    where
+        U: ForeignKey<T>
+    {
         return self.filter_join::<U>(">=", column, value);
     }
     pub fn join_le<'a, U>(
         self,
         column: &'a str,
         value: &'query dyn ToSql
-    ) -> Self where U: ForeignKey<T> {
+    ) -> Self
+    where
+        U: ForeignKey<T>
+    {
         return self.filter_join::<U>("<=", column, value);
     }
-    fn filter<'a>(
+    fn filter<'a, U>(
         mut self,
         op: &'a str,
         column: &'a str,
         value: &'query dyn ToSql
-    ) -> Self {
+    ) -> Self
+    where
+        U: PrimaryKeyModel
+    {
         let clause_str;
         let dlim;
         if self.clause.is_none() {
@@ -220,7 +376,7 @@ impl<'query, T> Query<'query, T> where T: PrimaryKeyModel {
                     format!(
                         "{}{}{}.{} {} {}",
                         clause_str, dlim,
-                        T::ALIAS, column,
+                        U::ALIAS, column,
                         op, param_name,
                     )
                 );
@@ -238,47 +394,65 @@ impl<'query, T> Query<'query, T> where T: PrimaryKeyModel {
         }
         return self;
     }
-    pub fn where_eq<'a>(
+    pub fn where_eq<'a, U>(
         self,
         column: &'a str,
         value: &'query dyn ToSql
-    ) -> Self {
-        return self.filter("=", column, value);
+    ) -> Self
+    where
+        U: PrimaryKeyModel
+    {
+        return self.filter::<U>("=", column, value);
     }
-    pub fn where_ne<'a>(
+    pub fn where_ne<'a, U>(
         self,
         column: &'a str,
         value: &'query dyn ToSql
-    ) -> Self {
-        return self.filter("!=", column, value);
+    ) -> Self
+    where
+        U: PrimaryKeyModel
+    {
+        return self.filter::<U>("!=", column, value);
     }
-    pub fn where_gt<'a>(
+    pub fn where_gt<'a, U>(
         self,
         column: &'a str,
         value: &'query dyn ToSql
-    ) -> Self {
-        return self.filter(">", column, value);
+    ) -> Self
+    where
+        U: PrimaryKeyModel
+    {
+        return self.filter::<U>(">", column, value);
     }
-    pub fn where_lt<'a>(
+    pub fn where_lt<'a, U>(
         self,
         column: &'a str,
         value: &'query dyn ToSql
-    ) -> Self {
-        return self.filter("<", column, value);
+    ) -> Self
+    where
+        U: PrimaryKeyModel
+    {
+        return self.filter::<U>("<", column, value);
     }
-    pub fn where_ge<'a>(
+    pub fn where_ge<'a, U>(
         self,
         column: &'a str,
         value: &'query dyn ToSql
-    ) -> Self {
-        return self.filter(">=", column, value);
+    ) -> Self
+    where
+        U: PrimaryKeyModel
+    {
+        return self.filter::<U>(">=", column, value);
     }
-    pub fn where_le<'a>(
+    pub fn where_le<'a, U>(
         self,
         column: &'a str,
         value: &'query dyn ToSql
-    ) -> Self {
-        return self.filter("<=", column, value);
+    ) -> Self
+    where
+        U: PrimaryKeyModel
+    {
+        return self.filter::<U>("<=", column, value);
     }
     fn concat<'a>(mut self, word: &'a str) -> Self {
         let clause_str;
@@ -458,5 +632,64 @@ impl<'query, T> Query<'query, T> where T: PrimaryKeyModel {
             let val = res.into_iter().nth(0).unwrap();
             return Ok(val);
         }
+    }
+}
+#[cfg(test)]
+mod test {
+    use worm_derive::Worm;
+    #[derive(Worm)]
+    #[dbmodel(table(schema="TestDb", name="TestTable", alias="testtable"))]
+    struct TestTable {
+        #[dbcolumn(column(name="Id", primary_key))]
+        id: i64,
+        #[dbcolumn(column(name="Name", unique_name, insertable))]
+        name: String,
+        #[dbcolumn(column(name="Active", active_flag, insertable))]
+        active: bool,
+    }
+    #[derive(Worm)]
+    #[dbmodel(table(schema="TestDb", name="AnotherTable", alias="anothertable"))]
+    struct AnotherTable {
+        #[dbcolumn(column(name="Id", primary_key))]
+        id: i64,
+        #[dbcolumn(column(name="Test_Id", foreign_key="TestTable"))]
+        test_id: i64,
+        #[dbcolumn(column(name="Name", unique_name, insertable))]
+        name: String,
+        #[dbcolumn(column(name="Active", active_flag, insertable))]
+        active: bool,
+    }
+    use crate::Query;
+    #[test]
+    fn test_select() {
+        let q = Query::<TestTable>::select()
+            .where_eq::<TestTable>(TestTable::ID, &1).and()
+            .where_gt::<TestTable>(TestTable::ACTIVE, &0);
+        let test_against = format!(
+            "select testtable.* from TestDb.TestTable as testtable where testtable.Id = :param0 and testtable.Active > :param1"
+        );
+        assert_eq!(q.query_to_string(), test_against);
+    }
+    #[test]
+    fn test_join() {
+        let q = Query::<TestTable>::select()
+            .join::<AnotherTable>().join_and()
+            .join_eq::<AnotherTable>(AnotherTable::ACTIVE, &1)
+            .where_eq::<TestTable>(TestTable::ID, &1);
+        let test_against = format!(
+            "select testtable.* from TestDb.TestTable as testtable join TestDb.AnotherTable as anothertable on testtable.Id = anothertable.Test_Id and anothertable.Active = :param0 where testtable.Id = :param1"
+        );
+        assert_eq!(q.query_to_string(), test_against);
+    }
+    #[test]
+    fn test_join_fk() {
+        let q = Query::<AnotherTable>::select()
+            .join_fk::<TestTable>().join_and()
+            .join_fk_eq::<TestTable>(TestTable::ID, &1)
+            .where_eq::<AnotherTable>(AnotherTable::ACTIVE, &1);
+        let test_against = format!(
+            "select anothertable.* from TestDb.AnotherTable as anothertable join TestDb.TestTable as testtable on anothertable.Test_Id = testtable.Id and testtable.Id = :param0 where anothertable.Active = :param1"
+        );
+        assert_eq!(q.query_to_string(), test_against);
     }
 }
