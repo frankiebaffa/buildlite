@@ -535,6 +535,10 @@ impl<'query, T> Query<'query, T> where T: PrimaryKeyModel {
             let clause = self.clause.clone().unwrap();
             sql.push_str(&format!(" {}", clause));
         }
+        if self.orderby.is_some() {
+            let orderby = self.orderby.clone().unwrap();
+            sql.push_str(&format!(" {}", orderby));
+        }
         return sql;
     }
     pub fn execute_update(self, db: &mut impl DbCtx) -> Result<usize, BuildliteError> {
