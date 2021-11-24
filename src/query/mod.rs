@@ -5,7 +5,7 @@ use {
     },
     rusqlite::ToSql,
     std::collections::HashMap,
-    worm::traits::{
+    worm::core::traits::{
         dbctx::DbCtx,
         foreignkey::ForeignKey,
         primarykey::PrimaryKeyModel,
@@ -640,7 +640,7 @@ impl<'query, T> Query<'query, T> where T: PrimaryKeyModel {
 }
 #[cfg(test)]
 mod test {
-    use worm_derive::Worm;
+    use worm::derive::Worm;
     #[derive(Worm)]
     #[dbmodel(table(schema="TestDb", name="TestTable", alias="testtable"))]
     struct TestTable {
