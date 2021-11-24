@@ -3,12 +3,12 @@ use {
         BuildliteError,
         BuildliteErrorMatch,
     },
-    rusqlite::ToSql,
     std::collections::HashMap,
-    worm::core::traits::{
-        dbctx::DbCtx,
-        foreignkey::ForeignKey,
-        primarykey::PrimaryKeyModel,
+    worm::core::{
+        DbCtx,
+        ForeignKey,
+        PrimaryKeyModel,
+        sql::ToSql,
     },
 };
 enum QueryType {
@@ -571,7 +571,7 @@ impl<'query, T> Query<'query, T> where T: PrimaryKeyModel {
             };
             value_order.push(value);
         }
-        let param = rusqlite::params_from_iter(value_order);
+        let param = worm::core::sql::params_from_iter(value_order);
         let c = db.use_connection();
         match self.query_type {
             QueryType::Select => {
@@ -611,7 +611,7 @@ impl<'query, T> Query<'query, T> where T: PrimaryKeyModel {
             };
             value_order.push(value);
         }
-        let param = rusqlite::params_from_iter(value_order);
+        let param = worm::core::sql::params_from_iter(value_order);
         let c = db.use_connection();
         let mut objs = Vec::new();
         match self.query_type {

@@ -30,7 +30,6 @@ name = "buildlite"
 version = "0.1.0"
 dependencies = [
  "chrono",
- "rusqlite",
  "worm",
 ]
 
@@ -339,7 +338,7 @@ dependencies = [
 [[package]]
 name = "worm_core"
 version = "0.1.1"
-source = "git+https://github.com/frankiebaffa/worm_core?branch=master#8ef6393384bd0db777c7f2718c604878170bd3c6"
+source = "git+https://github.com/frankiebaffa/worm_core?branch=master#636ab9227cac6c493f9e4affcb34a0fd459bcbb5"
 dependencies = [
  "rusqlite",
 ]
@@ -347,7 +346,7 @@ dependencies = [
 [[package]]
 name = "worm_core"
 version = "0.1.1"
-source = "git+https://github.com/frankiebaffa/worm_core#8ef6393384bd0db777c7f2718c604878170bd3c6"
+source = "git+https://github.com/frankiebaffa/worm_core#636ab9227cac6c493f9e4affcb34a0fd459bcbb5"
 dependencies = [
  "rusqlite",
 ]
@@ -355,12 +354,11 @@ dependencies = [
 [[package]]
 name = "worm_derive"
 version = "0.1.1"
-source = "git+https://github.com/frankiebaffa/worm_derive?branch=master#3bb9a90a9f345b9165782851ce8263b1dc12aa95"
+source = "git+https://github.com/frankiebaffa/worm_derive?branch=master#04d9179717e3e4674f2b0b315d4ba37708d1d5ea"
 dependencies = [
  "darling",
  "dotenv",
  "quote",
- "rusqlite",
  "syn",
  "worm_core 0.1.1 (git+https://github.com/frankiebaffa/worm_core)",
 ]

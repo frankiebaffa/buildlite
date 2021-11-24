@@ -1,11 +1,11 @@
 use {
-    rusqlite::Error as RusqliteError,
     std::{
         error::Error as StdError,
         fmt::Display as StdDisplay,
         fmt::Formatter as StdFormatter,
         fmt::Result as FmtResult,
     },
+    worm::core::sql::Error as RusqliteError,
 };
 pub trait BuildliteErrorMatch<T, U>: Sized where U: StdError {
     fn quick_match(self) -> Result<T, BuildliteError>;
