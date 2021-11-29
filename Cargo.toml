@@ -5,4 +5,6 @@ edition = "2021"
 
 [dependencies]
 chrono = { version = "0.4", features = ["serde"] }
+migaton = { git = "https://github.com/frankiebaffa/migaton", branch = "master" }
+serial_test = "*"
 worm = { git = "https://github.com/frankiebaffa/worm", branch = "master", features = ["derive"] }

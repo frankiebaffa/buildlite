@@ -1,0 +1,4 @@
+ordering: [
+  tbl_primary,
+  tbl_secondary,
+]
