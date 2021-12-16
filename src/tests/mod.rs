@@ -57,6 +57,16 @@ mod query_builder {
         );
         assert_eq!(q.query_to_string(), test_against);
     }
+    #[test]
+    fn test_orderby_asc() {
+        let q = Query::<AnotherTable>::select()
+            .orderby_desc(AnotherTable::NAME)
+            .where_eq::<AnotherTable>(AnotherTable::ACTIVE, &1);
+        let test_against = format!(
+            "select anothertable.* from TestDb.AnotherTable as anothertable where anothertable.Active = :param0 order by anothertable.Name desc"
+        );
+        assert_eq!(q.query_to_string(), test_against);
+    }
 }
 mod execution {
     use {

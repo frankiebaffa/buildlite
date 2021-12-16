@@ -477,7 +477,7 @@ impl<'query, T> Query<'query, T> where T: PrimaryKeyModel {
     pub fn or(self) -> Self {
         return self.concat("or");
     }
-    fn orderby<'a>(
+    fn order_by<'a>(
         mut self,
         dir: &'a str,
         column: &'a str,
@@ -509,10 +509,10 @@ impl<'query, T> Query<'query, T> where T: PrimaryKeyModel {
         return self;
     }
     pub fn orderby_asc<'a>(self, column: &'a str) -> Self {
-        return self.orderby("asc", column);
+        return self.order_by("asc", column);
     }
     pub fn orderby_desc<'a>(self, column: &'a str) -> Self {
-        return self.orderby("desc", column);
+        return self.order_by("desc", column);
     }
     pub fn query_to_string(&self) -> String {
         let mut sql;
